@@ -7,7 +7,6 @@ numpy==1.24.3
 PyInstaller==6.1.0
 pydantic==2.3.0
 aiohttp==3.8.5
-colorsys==1.0
 jsonschema==4.19.0
 setuptools==68.2.2
 wheel==0.41.2
