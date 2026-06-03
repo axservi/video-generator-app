@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Ventana principal de la aplicación
+Ventana principal de la aplicación mejorada
 """
 
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QMenuBar, QMenu, QStatusBar, QSplitter, QPushButton,
-    QLabel, QMessageBox
+    QLabel, QMessageBox, QDialog, QFormLayout, QLineEdit, QTextEdit
 )
 from PyQt5.QtCore import Qt, QSize, QTimer
 from PyQt5.QtGui import QIcon, QFont, QColor
@@ -15,6 +15,46 @@ from ui.editor_panel import EditorPanel
 from ui.preview_panel import PreviewPanel
 from ui.styles import load_stylesheet
 from utils.constants import APP_NAME, APP_VERSION, WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT
+
+
+class APIConfigDialog(QDialog):
+    """Diálogo para configurar API Key"""
+    
+    def __init__(self, config, parent=None):
+        super().__init__(parent)
+        self.config = config
+        self.setWindowTitle("Configuración API")
+        self.setModal(True)
+        self.setGeometry(100, 100, 500, 200)
+        
+        layout = QFormLayout(self)
+        
+        self.api_key_input = QLineEdit()
+        self.api_key_input.setText(self.config.get('api_key', ''))
+        self.api_key_input.setPlaceholderText("Ingresa tu API Key de NimVideo")
+        layout.addRow("API Key NimVideo:", self.api_key_input)
+        
+        button_layout = QHBoxLayout()
+        
+        save_btn = QPushButton("Guardar")
+        save_btn.clicked.connect(self.save_config)
+        button_layout.addWidget(save_btn)
+        
+        cancel_btn = QPushButton("Cancelar")
+        cancel_btn.clicked.connect(self.reject)
+        button_layout.addWidget(cancel_btn)
+        
+        layout.addRow(button_layout)
+    
+    def save_config(self):
+        """Guarda la configuración"""
+        api_key = self.api_key_input.text().strip()
+        if api_key:
+            self.config.set('api_key', api_key)
+            QMessageBox.information(self, "Éxito", "API Key guardada correctamente")
+            self.accept()
+        else:
+            QMessageBox.warning(self, "Error", "Ingresa una API Key válida")
 
 
 class MainWindow(QMainWindow):
@@ -77,6 +117,12 @@ class MainWindow(QMainWindow):
         redo_action = edit_menu.addAction('&Rehacer')
         redo_action.setShortcut('Ctrl+Y')
         
+        # Menú Herramientas
+        tools_menu = menubar.addMenu('&Herramientas')
+        
+        api_action = tools_menu.addAction('⚙️ Configurar API Key')
+        api_action.triggered.connect(self.configure_api)
+        
         # Menú Ver
         view_menu = menubar.addMenu('&Ver')
         
@@ -88,6 +134,9 @@ class MainWindow(QMainWindow):
         
         about_action = help_menu.addAction('&Acerca de')
         about_action.triggered.connect(self.show_about)
+        
+        docs_action = help_menu.addAction('&Documentación')
+        docs_action.triggered.connect(self.show_docs)
     
     def _create_central_widget(self):
         """
@@ -103,7 +152,7 @@ class MainWindow(QMainWindow):
         # Panel de edición
         self.editor_panel = EditorPanel(self.config, self.logger)
         
-        # Panel de previsualización
+        # Panel de previsualizacion
         self.preview_panel = PreviewPanel(self.config, self.logger)
         
         # Splitter para redimensionar
@@ -126,6 +175,12 @@ class MainWindow(QMainWindow):
         status_label = QLabel('Listo')
         self.status_bar.addWidget(status_label)
         self.status_label = status_label
+    
+    def configure_api(self):
+        """Abre diálogo de configuración de API"""
+        dialog = APIConfigDialog(self.config, self)
+        dialog.exec_()
+        self.status_label.setText('API Key actualizada')
     
     def new_project(self):
         """Crea un nuevo proyecto"""
@@ -159,4 +214,19 @@ class MainWindow(QMainWindow):
             'Aplicación de escritorio para generar videos realistas\n'
             'con avatares usando tecnología NimVideo.\n\n'
             '© 2024. Todos los derechos reservados.'
+        )
+    
+    def show_docs(self):
+        """Muestra documentación"""
+        QMessageBox.information(
+            self,
+            "Documentación",
+            "Para usar la aplicación:\n\n"
+            "1. Configura tu API Key (Herramientas > Configurar API Key)\n"
+            "2. Ingresa el texto para tu video\n"
+            "3. Selecciona avatar, voz e idioma\n"
+            "4. Ajusta la calidad y duración\n"
+            "5. Haz clic en 'Generar Video'\n"
+            "6. Exporta tu video\n\n"
+            "Para más info: https://github.com/axservi/video-generator-app"
         )
